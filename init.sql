@@ -31,7 +31,6 @@ CREATE TABLE IF NOT EXISTS scores (
     game_id UUID NOT NULL REFERENCES games(id) ON DELETE CASCADE,
     player_id UUID NOT NULL REFERENCES players(id) ON DELETE CASCADE,
     score BIGINT NOT NULL,
-    metadata JSONB DEFAULT '{}'::jsonb,
     submitted_at TIMESTAMP DEFAULT NOW()
 );
 

@@ -33,7 +33,7 @@ dependencies {
     implementation("io.ktor:ktor-server-call-logging-jvm:$ktor_version")
     implementation("io.ktor:ktor-server-cors-jvm:$ktor_version")
     implementation("io.ktor:ktor-server-status-pages-jvm:$ktor_version")
-    implementation("io.ktor:ktor-server-rate-limit:$ktor_version")
+    implementation("io.ktor:ktor-server-auth-jvm:$ktor_version")
 
     // Exposed ORM
     implementation("org.jetbrains.exposed:exposed-core:$exposed_version")
@@ -47,9 +47,6 @@ dependencies {
 
     // Logging
     implementation("ch.qos.logback:logback-classic:$logback_version")
-
-    // Redis (optional)
-    implementation("io.lettuce:lettuce-core:6.3.1.RELEASE")
 
     // Testing
     testImplementation("io.ktor:ktor-server-tests-jvm:$ktor_version")

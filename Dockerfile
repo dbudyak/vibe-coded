@@ -16,8 +16,8 @@ COPY src ./src
 # Build the application
 RUN gradle buildFatJar --no-daemon
 
-# Runtime stage
-FROM eclipse-temurin:17-jre-alpine
+# Runtime stage - using amazoncorretto for better ARM64 support
+FROM amazoncorretto:17-alpine
 
 WORKDIR /app
 

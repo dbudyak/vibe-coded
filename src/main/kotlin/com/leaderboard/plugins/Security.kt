@@ -1,8 +1,8 @@
 package com.leaderboard.plugins
 
 import com.leaderboard.services.GameService
-import io.ktor.http.*
 import io.ktor.server.application.*
+import io.ktor.http.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.util.*
@@ -10,7 +10,7 @@ import java.util.*
 
 val gameService = GameService()
 
-class ApiKeyPrincipal(val gameId: UUID) : Principal
+class ApiKeyPrincipal(val gameId: UUID)
 
 class ApiKeyAuthenticationPlugin(configuration: Configuration) {
     private val headerName = configuration.headerName

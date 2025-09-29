@@ -1,5 +1,6 @@
 package com.leaderboard.database.tables
 
+import org.jetbrains.exposed.sql.ReferenceOption
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.javatime.timestamp
 import java.time.Instant
@@ -17,7 +18,7 @@ object Games : Table("games") {
 
 object Players : Table("players") {
     val id = uuid("id").autoGenerate()
-    val gameId = uuid("game_id").references(Games.id)
+    val gameId = uuid("game_id").references(Games.id, onDelete = ReferenceOption.CASCADE)
     val playerId = varchar("player_id", 255)
     val displayName = varchar("display_name", 255).nullable()
     val createdAt = timestamp("created_at").clientDefault { Instant.now() }
@@ -32,10 +33,9 @@ object Players : Table("players") {
 
 object Scores : Table("scores") {
     val id = uuid("id").autoGenerate()
-    val gameId = uuid("game_id").references(Games.id)
-    val playerId = uuid("player_id").references(Players.id)
+    val gameId = uuid("game_id").references(Games.id, onDelete = ReferenceOption.CASCADE)
+    val playerId = uuid("player_id").references(Players.id, onDelete = ReferenceOption.CASCADE)
     val score = long("score")
-    val metadata = text("metadata").default("{}")
     val submittedAt = timestamp("submitted_at").clientDefault { Instant.now() }
 
     override val primaryKey = PrimaryKey(id)

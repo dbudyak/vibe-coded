@@ -21,7 +21,6 @@ class ScoreService {
             it[Scores.gameId] = gameId
             it[Scores.playerId] = playerId
             it[score] = submission.score
-            it[metadata] = Json.encodeToString(submission.metadata)
         }
 
         val result = insertStatement.resultedValues!!.first()
@@ -31,7 +30,7 @@ class ScoreService {
             playerId = submission.playerId,
             displayName = submission.displayName,
             score = result[Scores.score],
-            metadata = result[Scores.metadata],
+            metadata = Json.encodeToString(submission.metadata),
             submittedAt = result[Scores.submittedAt].toString()
         )
     }
