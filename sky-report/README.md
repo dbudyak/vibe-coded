@@ -168,6 +168,45 @@ docker-compose logs -f
 docker-compose down
 ```
 
+## Weekly Forecast Scripts
+
+Two convenient scripts are provided to get a 7-day forecast for a specific location:
+
+### Colorful Interactive Forecast
+
+```bash
+# For Porvoo, Finland (default location)
+./weekly_forecast.sh
+
+# For custom location, set environment variable
+SKY_REPORT_URL=http://localhost:8080 ./weekly_forecast.sh
+```
+
+This script displays a beautifully formatted 7-day forecast with:
+- Color-coded quality ratings (★★★★★ excellent to ★ poor)
+- Emoji weather icons (☀️ clear, ☁️ cloudy, etc.)
+- Temperature indicators
+- Light pollution ratings with visual stars
+- Evening time forecasts (22:00 local time, ideal for astrophotography)
+
+### Simple Text-Only Forecast
+
+```bash
+# Plain text output (good for logging or scripts)
+./weekly_forecast_simple.sh
+
+# Redirect to file
+./weekly_forecast_simple.sh > forecast.txt
+```
+
+This version provides the same information in plain text format without colors or emojis, suitable for:
+- Logging to files
+- Email notifications
+- Integration with other scripts
+- Text-based terminals
+
+Both scripts can be customized by editing the `LATITUDE` and `LONGITUDE` variables at the top of the file, or by setting the `SKY_REPORT_URL` environment variable if the service runs on a different host/port.
+
 ## Usage Examples
 
 ### Using curl
