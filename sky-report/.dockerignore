@@ -1,0 +1,19 @@
+# Git files
+.git
+.gitignore
+
+# Documentation
+*.md
+README.md
+
+# IDE files
+.vscode
+.idea
+*.swp
+*.swo
+
+# Test files
+*_test.go
+
+# Build artifacts
+sky-report
