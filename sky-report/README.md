@@ -85,7 +85,12 @@ Get detailed sky conditions for astrophotography at a specific location and time
     "fahrenheit": 54.5,
     "condition": "cold"
   },
-  "recommendation": "Sky conditions: clear with 15% clouds. However, significant light pollution (Bortle 8) will limit deep sky photography. Consider targeting brighter objects like the Moon or planets."
+  "recommendation": "Sky conditions: clear with 15% clouds. However, significant light pollution (Bortle 8) will limit deep sky photography. Consider targeting brighter objects like the Moon or planets.",
+  "data_source": {
+    "weather": "Open-Meteo Forecast API",
+    "light_pollution": "Calculated based on proximity to major cities",
+    "disclaimer": "Weather data may not reflect actual local conditions. Cloud coverage can vary significantly over short distances. Always verify conditions on-site before astrophotography."
+  }
 }
 ```
 
@@ -117,6 +122,13 @@ Get detailed sky conditions for astrophotography at a specific location and time
   - `comfortable`: 5°C to 20°C
   - `warm`: 20°C to 30°C
   - `hot`: Above 30°C
+
+### Data Source
+- `weather`: The weather data source used
+  - `Open-Meteo Forecast API`: For current and future times
+  - `Open-Meteo Archive API (historical data)`: For dates more than 24 hours in the past
+- `light_pollution`: How light pollution was calculated
+- `disclaimer`: Important reminder about data accuracy and limitations
 
 ## Running the Service
 
@@ -217,6 +229,45 @@ Example recommendations:
 - **Excellent**: Clear skies + Bortle 1-3 + Low cloud coverage
 - **Good**: Partly cloudy + Bortle 4-6
 - **Poor**: High cloud coverage or Bortle 7-9 (suggests brighter targets)
+
+## Data Accuracy and Limitations
+
+### Important Notes
+
+**Weather Data Accuracy**: Weather forecasts and even historical weather data can be inaccurate, especially for cloud coverage. Cloud conditions can vary significantly over short distances (even a few kilometers) due to:
+- Localized weather patterns
+- Microclimate effects
+- Rapid weather changes
+- Differences between forecast models and actual conditions
+
+**Historical Data**: For dates more than 24 hours in the past, the service automatically switches to the Open-Meteo Archive API, which provides historical observations. However, even this data:
+- May come from weather stations far from your exact location
+- Represents regional averages rather than point measurements
+- May not capture very localized clear patches or cloud formations
+
+**Light Pollution**: The light pollution calculation is based on distance from major cities and is an estimation. Actual light pollution can vary based on:
+- Local lighting ordinances
+- Topography (hills/mountains blocking light)
+- Weather conditions (humidity affects light scatter)
+- Time of year and special events
+
+### Best Practices
+
+1. **Always verify on-site**: Use this service for planning, but always check actual conditions when you arrive at your location
+2. **Use multiple sources**: Cross-reference with other services like:
+   - Clear Outside (cleardarksky.com)
+   - Weather Underground local station data
+   - Satellite imagery
+   - Local weather apps
+3. **Local knowledge**: Develop familiarity with your astrophotography sites and their typical weather patterns
+4. **Real-time updates**: Weather can change rapidly - check conditions multiple times leading up to your session
+
+### Known Issues
+
+- Weather API may return forecast data that differs from actual conditions
+- Cloud coverage percentages are regional estimates, not point measurements
+- Temperature readings are from the nearest weather station, which may be kilometers away
+- The service shows a disclaimer in every response to remind users of these limitations
 
 ## License
 
