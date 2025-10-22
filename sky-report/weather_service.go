@@ -42,11 +42,24 @@ func NewWeatherService() *WeatherService {
 
 // GetWeatherData fetches weather data from Open-Meteo API
 func (ws *WeatherService) GetWeatherData(lat, lon float64, t time.Time) (*OpenMeteoResponse, error) {
-	// Open-Meteo API endpoint (free, no API key required)
-	url := fmt.Sprintf(
-		"https://api.open-meteo.com/v1/forecast?latitude=%.6f&longitude=%.6f&current=temperature_2m,relative_humidity_2m,cloud_cover,wind_speed_10m&hourly=temperature_2m,cloud_cover&timezone=auto",
-		lat, lon,
-	)
+	now := time.Now()
+	isHistorical := t.Before(now.Add(-24 * time.Hour)) // More than 24 hours ago
+
+	var url string
+	if isHistorical {
+		// Use archive API for historical data (more accurate than forecast)
+		dateStr := t.Format("2006-01-02")
+		url = fmt.Sprintf(
+			"https://archive-api.open-meteo.com/v1/archive?latitude=%.6f&longitude=%.6f&start_date=%s&end_date=%s&hourly=temperature_2m,cloud_cover&timezone=auto",
+			lat, lon, dateStr, dateStr,
+		)
+	} else {
+		// Use forecast API for current and future data
+		url = fmt.Sprintf(
+			"https://api.open-meteo.com/v1/forecast?latitude=%.6f&longitude=%.6f&current=temperature_2m,relative_humidity_2m,cloud_cover,wind_speed_10m&hourly=temperature_2m,cloud_cover&timezone=auto",
+			lat, lon,
+		)
+	}
 
 	resp, err := ws.client.Get(url)
 	if err != nil {
@@ -77,7 +90,20 @@ func (ws *WeatherService) GetCloudCoverage(lat, lon float64, t time.Time) (Cloud
 		}, err
 	}
 
-	percentage := data.Current.CloudCover
+	var percentage int
+
+	// Check if we have current data (from forecast API)
+	if data.Current.Time != "" {
+		percentage = data.Current.CloudCover
+	} else if len(data.Hourly.CloudCover) > 0 {
+		// Use hourly data (from archive API) - find closest hour
+		percentage = ws.getClosestHourlyValue(data.Hourly.Time, data.Hourly.CloudCover, t)
+	} else {
+		return CloudInfo{
+			Percentage: 50,
+			Condition:  "unknown",
+		}, fmt.Errorf("no cloud coverage data available")
+	}
 
 	var condition string
 	switch {
@@ -97,6 +123,27 @@ func (ws *WeatherService) GetCloudCoverage(lat, lon float64, t time.Time) (Cloud
 	}, nil
 }
 
+// getClosestHourlyValue finds the value for the hour closest to the target time
+func (ws *WeatherService) getClosestHourlyValue(times []string, values []int, target time.Time) int {
+	if len(times) == 0 || len(values) == 0 {
+		return 50 // Default fallback
+	}
+
+	// Find the closest hour
+	targetHour := target.Format("2006-01-02T15:00")
+
+	for i, timeStr := range times {
+		if timeStr >= targetHour {
+			if i < len(values) {
+				return values[i]
+			}
+		}
+	}
+
+	// Return last value if target is after all times
+	return values[len(values)-1]
+}
+
 // GetTemperature retrieves temperature information
 func (ws *WeatherService) GetTemperature(lat, lon float64, t time.Time) (Temperature, error) {
 	data, err := ws.GetWeatherData(lat, lon, t)
@@ -109,7 +156,22 @@ func (ws *WeatherService) GetTemperature(lat, lon float64, t time.Time) (Tempera
 		}, err
 	}
 
-	celsius := data.Current.Temperature2m
+	var celsius float64
+
+	// Check if we have current data (from forecast API)
+	if data.Current.Time != "" {
+		celsius = data.Current.Temperature2m
+	} else if len(data.Hourly.Temperature2m) > 0 {
+		// Use hourly data (from archive API) - find closest hour
+		celsius = ws.getClosestHourlyValueFloat(data.Hourly.Time, data.Hourly.Temperature2m, t)
+	} else {
+		return Temperature{
+			Celsius:    15.0,
+			Fahrenheit: 59.0,
+			Condition:  "unknown",
+		}, fmt.Errorf("no temperature data available")
+	}
+
 	fahrenheit := celsius*9/5 + 32
 
 	var condition string
@@ -131,4 +193,25 @@ func (ws *WeatherService) GetTemperature(lat, lon float64, t time.Time) (Tempera
 		Fahrenheit: fahrenheit,
 		Condition:  condition,
 	}, nil
+}
+
+// getClosestHourlyValueFloat finds the float value for the hour closest to the target time
+func (ws *WeatherService) getClosestHourlyValueFloat(times []string, values []float64, target time.Time) float64 {
+	if len(times) == 0 || len(values) == 0 {
+		return 15.0 // Default fallback
+	}
+
+	// Find the closest hour
+	targetHour := target.Format("2006-01-02T15:00")
+
+	for i, timeStr := range times {
+		if timeStr >= targetHour {
+			if i < len(values) {
+				return values[i]
+			}
+		}
+	}
+
+	// Return last value if target is after all times
+	return values[len(values)-1]
 }

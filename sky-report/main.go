@@ -23,6 +23,13 @@ type SkyConditionResponse struct {
 	LightPollution  LightPollution  `json:"light_pollution"`
 	Temperature     Temperature     `json:"temperature"`
 	Recommendation  string          `json:"recommendation"`
+	DataSource      DataSourceInfo  `json:"data_source"`
+}
+
+type DataSourceInfo struct {
+	Weather        string `json:"weather"`
+	LightPollution string `json:"light_pollution"`
+	Disclaimer     string `json:"disclaimer"`
 }
 
 type Location struct {
@@ -164,6 +171,14 @@ func getSkyCondition(lat, lon float64, t time.Time) SkyConditionResponse {
 	// Generate recommendation
 	recommendation := generateRecommendation(cloudInfo, lightPollution, temp)
 
+	// Determine weather data source
+	now := time.Now()
+	isHistorical := t.Before(now.Add(-24 * time.Hour))
+	weatherSource := "Open-Meteo Forecast API"
+	if isHistorical {
+		weatherSource = "Open-Meteo Archive API (historical data)"
+	}
+
 	return SkyConditionResponse{
 		Location: Location{
 			Latitude:  lat,
@@ -174,6 +189,11 @@ func getSkyCondition(lat, lon float64, t time.Time) SkyConditionResponse {
 		LightPollution:  lightPollution,
 		Temperature:     temp,
 		Recommendation:  recommendation,
+		DataSource: DataSourceInfo{
+			Weather:        weatherSource,
+			LightPollution: "Calculated based on proximity to major cities",
+			Disclaimer:     "Weather data may not reflect actual local conditions. Cloud coverage can vary significantly over short distances. Always verify conditions on-site before astrophotography.",
+		},
 	}
 }
 
