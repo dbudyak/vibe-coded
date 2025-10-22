@@ -92,11 +92,15 @@ func (ws *WeatherService) GetCloudCoverage(lat, lon float64, t time.Time) (Cloud
 
 	var percentage int
 
-	// Check if we have current data (from forecast API)
-	if data.Current.Time != "" {
+	// Determine if we should use current data or hourly forecast
+	now := time.Now()
+	useCurrent := data.Current.Time != "" && t.Sub(now).Abs() < 30*time.Minute
+
+	if useCurrent {
+		// Use current data only if requested time is within 30 minutes of now
 		percentage = data.Current.CloudCover
 	} else if len(data.Hourly.CloudCover) > 0 {
-		// Use hourly data (from archive API) - find closest hour
+		// Use hourly data for specific time (works for both forecast and archive)
 		percentage = ws.getClosestHourlyValue(data.Hourly.Time, data.Hourly.CloudCover, t)
 	} else {
 		return CloudInfo{
@@ -129,18 +133,42 @@ func (ws *WeatherService) getClosestHourlyValue(times []string, values []int, ta
 		return 50 // Default fallback
 	}
 
-	// Find the closest hour
-	targetHour := target.Format("2006-01-02T15:00")
+	// Round target to nearest hour
+	targetHour := target.Truncate(time.Hour)
+
+	// Find the closest matching hour
+	var closestIdx int
+	minDiff := time.Duration(1<<63 - 1) // Max duration
 
 	for i, timeStr := range times {
-		if timeStr >= targetHour {
-			if i < len(values) {
-				return values[i]
+		// Parse the time string
+		t, err := time.Parse(time.RFC3339, timeStr)
+		if err != nil {
+			// Try alternate format without timezone
+			t, err = time.Parse("2006-01-02T15:04", timeStr)
+			if err != nil {
+				continue
 			}
+		}
+
+		// Calculate time difference
+		diff := t.Sub(targetHour).Abs()
+		if diff < minDiff {
+			minDiff = diff
+			closestIdx = i
+		}
+
+		// If we found exact match or passed target, use this one
+		if !t.Before(targetHour) && i > 0 {
+			break
 		}
 	}
 
-	// Return last value if target is after all times
+	if closestIdx < len(values) {
+		return values[closestIdx]
+	}
+
+	// Fallback to last value
 	return values[len(values)-1]
 }
 
@@ -158,11 +186,15 @@ func (ws *WeatherService) GetTemperature(lat, lon float64, t time.Time) (Tempera
 
 	var celsius float64
 
-	// Check if we have current data (from forecast API)
-	if data.Current.Time != "" {
+	// Determine if we should use current data or hourly forecast
+	now := time.Now()
+	useCurrent := data.Current.Time != "" && t.Sub(now).Abs() < 30*time.Minute
+
+	if useCurrent {
+		// Use current data only if requested time is within 30 minutes of now
 		celsius = data.Current.Temperature2m
 	} else if len(data.Hourly.Temperature2m) > 0 {
-		// Use hourly data (from archive API) - find closest hour
+		// Use hourly data for specific time (works for both forecast and archive)
 		celsius = ws.getClosestHourlyValueFloat(data.Hourly.Time, data.Hourly.Temperature2m, t)
 	} else {
 		return Temperature{
@@ -201,17 +233,41 @@ func (ws *WeatherService) getClosestHourlyValueFloat(times []string, values []fl
 		return 15.0 // Default fallback
 	}
 
-	// Find the closest hour
-	targetHour := target.Format("2006-01-02T15:00")
+	// Round target to nearest hour
+	targetHour := target.Truncate(time.Hour)
+
+	// Find the closest matching hour
+	var closestIdx int
+	minDiff := time.Duration(1<<63 - 1) // Max duration
 
 	for i, timeStr := range times {
-		if timeStr >= targetHour {
-			if i < len(values) {
-				return values[i]
+		// Parse the time string
+		t, err := time.Parse(time.RFC3339, timeStr)
+		if err != nil {
+			// Try alternate format without timezone
+			t, err = time.Parse("2006-01-02T15:04", timeStr)
+			if err != nil {
+				continue
 			}
+		}
+
+		// Calculate time difference
+		diff := t.Sub(targetHour).Abs()
+		if diff < minDiff {
+			minDiff = diff
+			closestIdx = i
+		}
+
+		// If we found exact match or passed target, use this one
+		if !t.Before(targetHour) && i > 0 {
+			break
 		}
 	}
 
-	// Return last value if target is after all times
+	if closestIdx < len(values) {
+		return values[closestIdx]
+	}
+
+	// Fallback to last value
 	return values[len(values)-1]
 }
